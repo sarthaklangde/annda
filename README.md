@@ -1,2 +1,2 @@
 # annda
-Contains code to support assignments from Ann and Deep Arch course.
+Contains code to support assignments from ANN and Deep Arch course.
