@@ -119,8 +119,9 @@ def main():
         print(y_test[i], y_pred[i])
 
     print("Residual Error:", residual_error(y_test, y_pred))
-    plt.plot(sin_data['X_train'], sin_data['y_train'])
-    plt.plot(sin_data['X_test'], y_pred)
+    plt.plot(sin_data['X_train'], sin_data['y_train'], label="sin(2x)")
+    plt.plot(sin_data['X_test'], y_pred, label="RBF")
+    plt.legend()
     plt.show()
 
 main()
