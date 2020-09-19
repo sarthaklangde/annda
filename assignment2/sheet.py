@@ -10,7 +10,7 @@ def create_dataset(should_plot=False):
     square_output[square_output >= 0] = 1
     square_output[square_output < 0] = -1
 
-    test_points = np.arange(start=0.05, stop=np.pi, step=0.1).T
+    test_points = np.arange(start=0.05, stop=2*np.pi, step=0.1).T
     sin_test_output = np.sin(2 * test_points)
     square_test_output = np.copy(sin_test_output)
     square_test_output[square_test_output >= 0] = 1
@@ -55,10 +55,12 @@ def manual_gaussian(X, pos):
     return feature
 
 class RBF:
-    def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]]):
+    def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]], lr=0.01, epochs=100):
         self.hiddenSize = len(pos)
-        self.weights = np.random.randn(1, self.hiddenSize)
+        self.weights = np.random.randn(self.hiddenSize, 1)
         self.pos = pos
+        self.lr = lr
+        self.epochs=epochs
 
     def fit_linear(self, X_train, y_train):
         N, d = X_train.shape
@@ -70,15 +72,26 @@ class RBF:
         weights = np.linalg.solve(a, b)
         self.weights = weights
 
-    def fit_delta(self, X_train, y_train):
-        print(self.weights.shape)
-
-
     def predict(self, X_test):
         phi = manual_gaussian(X_test, self.pos)
         y_pred = phi @ self.weights
         return y_pred
 
+    def forward(self, X_train):
+        phi = manual_gaussian(X_train, self.pos)
+        y_pred = phi @ self.weights
+        return phi, y_pred
+
+    def fit_delta(self, X_train, y_train):
+        for i in range(self.epochs):
+            # Calculate f(xk) with random weight values
+            phi, y_pred = self.forward(X_train)
+
+            # Calculate error between current values and expected values
+            delta_w = (self.lr * ((y_train - y_pred).T @ phi)).T
+
+            # Calculate weights
+            self.weights = self.weights + delta_w
 
 def residual_error(y1, y2):
     err = np.abs(y1 - y2).mean()
@@ -93,22 +106,22 @@ def main():
 
     # pos = [[2]]
     pos = []
-    means = [7*np.pi/4, 3*np.pi/4]
+    means = [np.pi/4, 3*np.pi/4]
     for i in range(len(means)):
         pos.append([means[i], 0.4])
 
     print(len(pos), pos)
     model = RBF(pos=pos)
     model.fit_delta(sin_data['X_train'], sin_data['y_train'])
-    # y_pred = model.predict(sin_data['X_test'])
+    y_pred = model.predict(sin_data['X_test'])
 
-    # y_test = sin_data['y_test'].reshape(-1, 1)
-    # for i in range(len(y_test)):
-    #     print(y_test[i], y_pred[i])
-    #
-    # print("Residual Error:", residual_error(y_test, y_pred))
-    # plt.plot(sin_data['X_train'], sin_data['y_train'])
-    # plt.plot(sin_data['X_test'], y_pred)
-    # plt.show()
+    y_test = sin_data['y_test'].reshape(-1, 1)
+    for i in range(len(y_test)):
+        print(y_test[i], y_pred[i])
+
+    print("Residual Error:", residual_error(y_test, y_pred))
+    plt.plot(sin_data['X_train'], sin_data['y_train'])
+    plt.plot(sin_data['X_test'], y_pred)
+    plt.show()
 
 main()
