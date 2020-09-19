@@ -86,7 +86,8 @@ class RBF:
         y_pred = phi @ self.weights
         return phi, y_pred
 
-    def fit_delta(self, X_train, y_train, lr=0.01, epochs=100):
+    def fit_delta(self, X_train, y_train, lr=0.01, epochs=100, stop_tol = 1e-4):
+        losses = []
         for i in range(epochs):
             # Calculate f(xk) with random weight values
             phi, y_pred = self.forward(X_train)
@@ -97,9 +98,58 @@ class RBF:
             # Calculate weights
             self.weights = self.weights + delta_w
 
+            # Calculate loss
+            _, y_pred = self.forward(X_train)
+            current_loss = mean_squared_error(y_train, y_pred)
+            if i > 0 and np.abs(current_loss - losses[-1]) < stop_tol:
+                losses.append(current_loss)
+                break
+            else:
+                losses.append(current_loss)
+
+        print("Total epochs: ", len(losses))
+        print("Final loss: ", losses[-1])
+
+    def fit_delta_online(self, X_train, y_train, lr=0.01, epochs=100, stop_tol=1e-4):
+        losses = []
+        for i in range(epochs):
+            idx = np.arange(len(X_train))
+            np.random.shuffle(idx)
+            X_shuffled = X_train[idx]
+            y_shuffled = y_train[idx]
+
+            for j in range(len(X_train)):
+                current_x = X_shuffled[j]
+
+                # Calculate f(xk) with random weight values
+                phi, y_pred = self.forward(current_x)
+
+                # Calculate error between current values and expected values
+                delta_w = (lr * ((y_shuffled[j] - y_pred).T @ phi)).T
+
+                # Calculate weights
+                self.weights = self.weights + delta_w
+
+            # Calculate loss
+            _, y_pred = self.forward(X_train)
+            current_loss = mean_squared_error(y_train, y_pred)
+            if i > 0 and np.abs(current_loss - losses[-1]) < stop_tol:
+                losses.append(current_loss)
+                break
+            else:
+                losses.append(current_loss)
+
+        print("Total epochs: ", len(losses))
+        print("Final loss: ", losses[-1])
+
 
 def residual_error(y1, y2):
     err = np.abs(y1 - y2).mean()
+    return err
+
+
+def mean_squared_error(y1, y2):
+    err = np.square(y1 - y2).mean()
     return err
 
 
@@ -115,14 +165,12 @@ def main():
     for i in range(len(means)):
         pos.append([means[i], 0.4])
 
-    print(len(pos), pos)
+    # print(len(pos), pos)
     model = RBF(pos=pos)
     model.fit_delta(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
     y_pred = model.predict(sin_data['X_test'])
 
     y_test = sin_data['y_test'].reshape(-1, 1)
-    for i in range(len(y_test)):
-        print(y_test[i], y_pred[i])
 
     print("Residual Error:", residual_error(y_test, y_pred))
     plt.plot(sin_data['X_train'], sin_data['y_train'], label="sin(2x)")
@@ -150,3 +198,37 @@ def plot_noisy_data():
     plt.legend()
     plt.show()
 
+
+def main2():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+
+    rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    fig = plt.figure(figsize=plt.figaspect(0.2))
+    for rbf_iter in range(len(rbf_widths)):
+        ax = fig.add_subplot(1, 5, rbf_iter+1)
+        means = np.arange(start=np.pi/4, stop=2 * np.pi, step=np.pi/4)
+        pos = []
+        for i in range(len(means)):
+            pos.append([means[i], rbf_widths[rbf_iter]])
+
+        model = RBF(pos=pos)
+
+        model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
+        y_pred = model.predict(sin_data['X_test'])
+
+        y_test = sin_data['y_test'].reshape(-1, 1)
+        print("Residual Error:", residual_error(y_test, y_pred))
+
+        ax.plot(sin_data['X_train'], sin_data['y_train'], label="sin(2x) with noise")
+        ax.plot(sin_data['X_test'], y_pred, label="Prediction")
+        ax.set_title("Online learning with sigma {}".format(rbf_widths[rbf_iter]))
+        if (rbf_iter == 4):
+            handles, labels = ax.get_legend_handles_labels()
+            fig.legend(handles, labels, loc='lower left')
+
+    plt.show()
+
+
+main2()
