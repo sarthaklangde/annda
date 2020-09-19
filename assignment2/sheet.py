@@ -73,10 +73,12 @@ class RBF:
 
     def predict(self, X_test):
         phi = manual_gaussian(X_test, self.pos)
-        print("phi", phi.shape, self.weights.shape)
         y_pred = phi @ self.weights
         return y_pred
 
+def residual_error(y1, y2):
+    err = np.abs(y1 - y2).mean()
+    return err
 
 def main():
     print("Main 1")
@@ -93,7 +95,8 @@ def main():
     model = RBF(pos=pos)
     model.fit_linear(sin_data['X_train'], sin_data['y_train'])
     y_pred = model.predict(sin_data['X_test'])
-    print(y_pred)
+
+    print("Residual Error:", residual_error(sin_data['y_test'], y_pred))
     plt.plot(sin_data['X_test'], y_pred)
     plt.show()
 
