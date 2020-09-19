@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def create_dataset(should_plot=False):
-    input_points = np.arange(start=0, stop=np.pi, step=0.1)
+    input_points = np.arange(start=0, stop=2*np.pi, step=0.1)
     input_points = input_points.reshape(-1, 1)
     sin_output = np.sin(2 * input_points)
     square_output = np.copy(sin_output)
@@ -57,8 +57,7 @@ def manual_gaussian(X, pos):
 class RBF:
     def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]]):
         self.hiddenSize = len(pos)
-        # self.weights = np.random.randn(1, self.hiddenSize)
-        self.weights = None
+        self.weights = np.random.randn(1, self.hiddenSize)
         self.pos = pos
 
     def fit_linear(self, X_train, y_train):
@@ -71,14 +70,20 @@ class RBF:
         weights = np.linalg.solve(a, b)
         self.weights = weights
 
+    def fit_delta(self, X_train, y_train):
+        print(self.weights.shape)
+
+
     def predict(self, X_test):
         phi = manual_gaussian(X_test, self.pos)
         y_pred = phi @ self.weights
         return y_pred
 
+
 def residual_error(y1, y2):
     err = np.abs(y1 - y2).mean()
     return err
+
 
 def main():
     print("Main 1")
@@ -86,18 +91,24 @@ def main():
     sin_data = dataset['sin']
     square_data = dataset['square']
 
+    # pos = [[2]]
     pos = []
-    means = np.arange(start=0, stop=3.1, step=0.1)
+    means = [7*np.pi/4, 3*np.pi/4]
     for i in range(len(means)):
-        pos.append([means[i], 0.1])
+        pos.append([means[i], 0.4])
 
-    print(pos)
+    print(len(pos), pos)
     model = RBF(pos=pos)
-    model.fit_linear(sin_data['X_train'], sin_data['y_train'])
-    y_pred = model.predict(sin_data['X_test'])
+    model.fit_delta(sin_data['X_train'], sin_data['y_train'])
+    # y_pred = model.predict(sin_data['X_test'])
 
-    print("Residual Error:", residual_error(sin_data['y_test'], y_pred))
-    plt.plot(sin_data['X_test'], y_pred)
-    plt.show()
+    # y_test = sin_data['y_test'].reshape(-1, 1)
+    # for i in range(len(y_test)):
+    #     print(y_test[i], y_pred[i])
+    #
+    # print("Residual Error:", residual_error(y_test, y_pred))
+    # plt.plot(sin_data['X_train'], sin_data['y_train'])
+    # plt.plot(sin_data['X_test'], y_pred)
+    # plt.show()
 
 main()
