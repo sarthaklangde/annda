@@ -55,12 +55,10 @@ def manual_gaussian(X, pos):
     return feature
 
 class RBF:
-    def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]], lr=0.01, epochs=100):
+    def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]]):
         self.hiddenSize = len(pos)
         self.weights = np.random.randn(self.hiddenSize, 1)
         self.pos = pos
-        self.lr = lr
-        self.epochs=epochs
 
     def fit_linear(self, X_train, y_train):
         N, d = X_train.shape
@@ -82,16 +80,17 @@ class RBF:
         y_pred = phi @ self.weights
         return phi, y_pred
 
-    def fit_delta(self, X_train, y_train):
-        for i in range(self.epochs):
+    def fit_delta(self, X_train, y_train, lr=0.01, epochs=100):
+        for i in range(epochs):
             # Calculate f(xk) with random weight values
             phi, y_pred = self.forward(X_train)
 
             # Calculate error between current values and expected values
-            delta_w = (self.lr * ((y_train - y_pred).T @ phi)).T
+            delta_w = (lr * ((y_train - y_pred).T @ phi)).T
 
             # Calculate weights
             self.weights = self.weights + delta_w
+
 
 def residual_error(y1, y2):
     err = np.abs(y1 - y2).mean()
@@ -112,7 +111,7 @@ def main():
 
     print(len(pos), pos)
     model = RBF(pos=pos)
-    model.fit_delta(sin_data['X_train'], sin_data['y_train'])
+    model.fit_delta(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
     y_pred = model.predict(sin_data['X_test'])
 
     y_test = sin_data['y_test'].reshape(-1, 1)
