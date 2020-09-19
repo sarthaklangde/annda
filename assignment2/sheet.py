@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def create_dataset(should_plot=False):
+def create_dataset(should_plot=False, add_noise=False):
     input_points = np.arange(start=0, stop=2*np.pi, step=0.1)
     input_points = input_points.reshape(-1, 1)
     sin_output = np.sin(2 * input_points)
@@ -15,6 +15,12 @@ def create_dataset(should_plot=False):
     square_test_output = np.copy(sin_test_output)
     square_test_output[square_test_output >= 0] = 1
     square_test_output[square_test_output < 0] = -1
+
+    if add_noise:
+        sin_output = sin_output + np.random.normal(0, 0.1, len(sin_output)).reshape(sin_output.shape)
+        square_output = square_output + np.random.normal(0, 0.1, len(square_output)).reshape(square_output.shape)
+        sin_test_output = sin_test_output + np.random.normal(0, 0.1, len(sin_test_output)).reshape(sin_test_output.shape)
+        square_test_output = square_test_output + np.random.normal(0, 0.1, len(square_test_output)).reshape(square_test_output.shape)
 
     if should_plot:
         plt.plot(input_points, sin_output, label="sin(2x)")
@@ -124,4 +130,23 @@ def main():
     plt.legend()
     plt.show()
 
-main()
+
+def plot_noisy_data():
+    data1 = create_dataset()
+    data2 = create_dataset(add_noise=True)
+
+    sindata1 = data1['sin']
+    sindata2 = data2['sin']
+    squaredata1 = data1['square']
+    squaredata2 = data2['square']
+
+    plt.plot(sindata1['X_train'], sindata1['y_train'], label="sin(2x)")
+    plt.plot(sindata2['X_train'], sindata2['y_train'], label="sin(2x) with noise")
+    plt.legend()
+    plt.show()
+
+    plt.plot(squaredata1['X_train'], squaredata1['y_train'], label="square(2x)")
+    plt.plot(squaredata2['X_train'], squaredata2['y_train'], label="square(2x) with noise")
+    plt.legend()
+    plt.show()
+
