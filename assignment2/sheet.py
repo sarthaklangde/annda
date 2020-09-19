@@ -65,17 +65,10 @@ class RBF:
         N, d = X_train.shape
         # First we transform input to higher space using kernel like trick (not sure)
         phi = manual_gaussian(X_train, self.pos)
-
-        # prod = np.dot(phi.T, phi)
-        # print(prod)
-        # a = prod + (np.eye(len(prod)) * 1e-5)
-        # b = phi.T @ y_train
-        weights = phi.T @ y_train
-        #
-        # weights = np.linalg.solve(a, b)
-        print("New", weights)
-        # Then we calculate the weights according to eqn (8)
-
+        prod = np.dot(phi.T, phi)
+        a = prod + (np.eye(len(prod)) * 0)
+        b = phi.T @ y_train        #
+        weights = np.linalg.solve(a, b)
         self.weights = weights
 
     def predict(self, X_test):
