@@ -60,6 +60,7 @@ def manual_gaussian(X, pos):
     feature = np.array(feature).T
     return feature
 
+
 class RBF:
     def __init__(self, pos=[[0.75, 0.1], [2.2, 0.1]]):
         self.hiddenSize = len(pos)
@@ -109,6 +110,7 @@ class RBF:
 
         print("Total epochs: ", len(losses))
         print("Final loss: ", losses[-1])
+        return losses
 
     def fit_delta_online(self, X_train, y_train, lr=0.01, epochs=100, stop_tol=1e-4):
         losses = []
@@ -141,6 +143,7 @@ class RBF:
 
         print("Total epochs: ", len(losses))
         print("Final loss: ", losses[-1])
+        return losses
 
 
 def residual_error(y1, y2):
@@ -204,18 +207,30 @@ def main2():
     sin_data = dataset['sin']
     square_data = dataset['square']
 
-    rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    # rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    # num_of_means = [3, 4, 5, 6, 7, 8, 9, 10]
+    rbf_widths = [0.5]
+    num_of_means = [6]
+    lrs = [0.01, 0.02, 0.05, 0.1,  0.2]
     fig = plt.figure(figsize=plt.figaspect(0.2))
-    for rbf_iter in range(len(rbf_widths)):
-        ax = fig.add_subplot(1, 5, rbf_iter+1)
-        means = np.arange(start=np.pi/4, stop=2 * np.pi, step=np.pi/4)
+    rbf_iter = 0
+    mean_iter = 0
+    for lr_iter in range(len(lrs)):
+        # for mean_iter in range(len(num_of_means)):
+        # for rbf_iter in range(len(rbf_widths)):
+        ax = fig.add_subplot(1, 5, lr_iter+1)
+        means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+        means = means[1:-1]
         pos = []
         for i in range(len(means)):
             pos.append([means[i], rbf_widths[rbf_iter]])
 
         model = RBF(pos=pos)
 
-        model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
+        # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+        losses = model.fit_delta(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+        final_epochs = len(losses)
+        mse = losses[-1]
         y_pred = model.predict(sin_data['X_test'])
 
         y_test = sin_data['y_test'].reshape(-1, 1)
@@ -223,11 +238,13 @@ def main2():
 
         ax.plot(sin_data['X_train'], sin_data['y_train'], label="sin(2x) with noise")
         ax.plot(sin_data['X_test'], y_pred, label="Prediction")
-        ax.set_title("Online learning with sigma {}".format(rbf_widths[rbf_iter]))
-        if (rbf_iter == 4):
+        ax.set_title("lr:{}, ep:{}, mse:{:.2} ".format(lrs[lr_iter], final_epochs, mse))
+        if lr_iter == 4:
             handles, labels = ax.get_legend_handles_labels()
             fig.legend(handles, labels, loc='lower left')
 
+    fig.suptitle("Batch Learning with mean:{}, RBFs:{}".format(num_of_means[mean_iter]-2, rbf_widths[rbf_iter]), y=1)
+    fig.tight_layout()
     plt.show()
 
 
