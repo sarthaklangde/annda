@@ -4,6 +4,10 @@ from dbn import DeepBeliefNet
 
 if __name__ == "__main__":
 
+    # added vars for 4.1a and 4.1b
+    n_hidden = [500, 450, 400, 350, 300, 250, 200]
+
+
     image_size = [28,28]
     train_imgs,train_lbls,test_imgs,test_lbls = read_mnist(dim=image_size, n_train=60000, n_test=10000)
 
@@ -11,16 +15,19 @@ if __name__ == "__main__":
     
     print ("\nStarting a Restricted Boltzmann Machine..")
 
-    rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
-                                     ndim_hidden=200,
-                                     is_bottom=True,
-                                     image_size=image_size,
-                                     is_top=False,
-                                     n_labels=10,
-                                     batch_size=10
-    )
-    
-    rbm.cd1(visible_trainset=train_imgs, n_iterations=10000)
+    for hidden in n_hidden:
+
+        print('RBM with {} hidden units:\n'.format(hidden))
+        rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0]*image_size[1],
+                                         ndim_hidden=hidden,
+                                         is_bottom=True,
+                                         image_size=image_size,
+                                         is_top=False,
+                                         n_labels=10,
+                                         batch_size=20
+        )
+
+        rbm.cd1(visible_trainset=train_imgs, n_iterations=10)
     
     ''' deep- belief net '''
 
