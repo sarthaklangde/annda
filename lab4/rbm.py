@@ -84,9 +84,11 @@ class RestrictedBoltzmannMachine():
         idx = np.arange(0, n_samples-1, self.batch_size )
         # print(idx)
 
+        epoch_errors = []
         # for each epoch
         for it in range(n_iterations):
 
+            batch_errors = []
             # for each batch
             for i in idx:
                 # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
@@ -100,14 +102,13 @@ class RestrictedBoltzmannMachine():
                 ph1, h_1 = self.get_h_given_v(v_1, last=True)
 
                 # [TODO TASK 4.1] update the parameters using function 'update_params'
-
                 self.update_params(v_0=v_0, h_0=h_0, v_k=v_1, h_k=h_1)
 
                 if i % self.rf["period"] == 0:
                     fig, axs = plt.subplots(1, 2)
                     axs[0].imshow(v_0[0].reshape(self.image_size[0], self.image_size[1]))
                     axs[1].imshow(v_1[0].reshape(self.image_size[0], self.image_size[1]))
-                    # plt.show()
+                    plt.show()
 
                 # visualize once in a while when visible layer is input images
 
@@ -118,9 +119,13 @@ class RestrictedBoltzmannMachine():
                 # print progress
 
                 if i % self.print_period == 0:
-                    print("Epoch={} Minibatch number ={} recon_loss={}".format(it, int(i//self.batch_size), np.linalg.norm(v_0 - v_1)))
+                    reconstruction_error = np.mean(np.absolute(v_0 - v_1))
+                    print("Epoch={} Minibatch number ={} recon_loss={}".format(it, int(i//self.batch_size), reconstruction_error))
+                    batch_errors.append(reconstruction_error)
 
-        return
+            epoch_errors.append(batch_errors)
+
+        return np.hstack(epoch_errors)
 
     def update_params(self, v_0, h_0, v_k, h_k):
 

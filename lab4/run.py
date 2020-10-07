@@ -5,8 +5,7 @@ from dbn import DeepBeliefNet
 if __name__ == "__main__":
 
     # added vars for 4.1a and 4.1b
-    n_hidden = [500, 450, 400, 350, 300, 250, 200]
-
+    n_hidden = [500]
 
     image_size = [28,28]
     train_imgs,train_lbls,test_imgs,test_lbls = read_mnist(dim=image_size, n_train=60000, n_test=10000)
@@ -14,6 +13,8 @@ if __name__ == "__main__":
     ''' restricted boltzmann machine '''
     
     print ("\nStarting a Restricted Boltzmann Machine..")
+
+    rbm_errors = []
 
     for hidden in n_hidden:
 
@@ -27,7 +28,20 @@ if __name__ == "__main__":
                                          batch_size=20
         )
 
-        rbm.cd1(visible_trainset=train_imgs, n_iterations=10)
+        epoch_errors = rbm.cd1(visible_trainset=train_imgs, n_iterations=10)
+        rbm_errors.append(epoch_errors)
+    # 7x100
+    print(np.shape(rbm_errors))
+    # print(rbm_errors[0])
+
+    plt.figure()
+    plt.title('Comparison of different RBM architectures performance')
+    plt.ylabel('Mean reconstruction error')
+    plt.xlabel('Training samples')
+    for i,n in enumerate(n_hidden):
+        plt.plot(np.arange(1, 600001, 6000), rbm_errors[i], label='N_hidden={}'.format(n))
+    plt.legend()
+    plt.show()
     
     ''' deep- belief net '''
 
