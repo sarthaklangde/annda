@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.neural_network import MLPRegressor
 
 
 def create_dataset(should_plot=False, add_noise=False):
@@ -248,4 +249,267 @@ def main2():
     plt.show()
 
 
-main2()
+def main2_square():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+
+    rbf_widths = [0.1, 0.2, 0.3, 0.5, 0.7]
+    fig = plt.figure(figsize=plt.figaspect(0.2))
+    for rbf_iter in range(len(rbf_widths)):
+        ax = fig.add_subplot(1, 5, rbf_iter + 1)
+        means = np.arange(start=np.pi / 4, stop=2 * np.pi, step=np.pi / 16)
+        pos = []
+        for i in range(len(means)):
+            pos.append([means[i], rbf_widths[rbf_iter]])
+
+        model = RBF(pos=pos)
+
+        losses = model.fit_delta(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
+        # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
+
+        final_epochs = len(losses)
+        mse = losses[-1]
+        y_pred = model.predict(square_data['X_test'])
+
+        y_test = sin_data['y_test'].reshape(-1, 1)
+        print("Residual Error:", residual_error(y_test, y_pred))
+
+        ax.plot(square_data['X_train'], square_data['y_train'], label="sin(2x) with noise")
+        ax.plot(square_data['X_test'], y_pred, label="Prediction")
+        ax.set_title("σ:{}, ep:{}, mse:{:.2f}".format(rbf_widths[rbf_iter], final_epochs, mse))
+        if rbf_iter == 4:
+            handles, labels = ax.get_legend_handles_labels()
+            fig.legend(handles, labels, loc='lower left')
+
+    fig.suptitle("Batch Learning", y=1)
+    fig.tight_layout()
+
+    plt.show()
+
+
+def main3_square():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+
+    rbf_widths = [0.1, 0.2, 0.3, 0.5, 0.7]
+    num_of_means = [12, 14, 16, 18, 20, 22, 24, 26, 28, 30]
+    # rbf_widths = [0.5]
+    # num_of_means = [6]
+    # lrs = [0.01, 0.02, 0.05, 0.1, 0.2]
+    # rbf_iter = 0
+    # mean_iter = 0
+    for mean_iter in range(len(num_of_means)):
+        fig = plt.figure(figsize=plt.figaspect(0.2))
+        for rbf_iter in range(len(rbf_widths)):
+            ax = fig.add_subplot(1, 5, rbf_iter + 1)
+            means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+            means = means[1:-1]
+            pos = []
+            for i in range(len(means)):
+                pos.append([means[i], rbf_widths[rbf_iter]])
+
+            model = RBF(pos=pos)
+
+            # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=0.01, epochs=1000)
+            losses = model.fit_delta(square_data['X_train'], square_data['y_train'], lr=0.01, epochs=1000)
+            final_epochs = len(losses)
+            mse = losses[-1]
+            y_pred = model.predict(square_data['X_test'])
+
+            y_test = sin_data['y_test'].reshape(-1, 1)
+            print("Residual Error:", residual_error(y_test, y_pred))
+
+            ax.plot(square_data['X_train'], square_data['y_train'], label="sin(2x) with noise")
+            ax.plot(square_data['X_test'], y_pred, label="Prediction")
+            ax.set_title("σ:{}, ep:{}, mse:{:.2f}".format(rbf_widths[rbf_iter], final_epochs, mse))
+            if rbf_iter == 4:
+                handles, labels = ax.get_legend_handles_labels()
+                fig.legend(handles, labels, loc='lower left')
+
+        fig.suptitle("Batch Learning with RBFs:{}".format(num_of_means[mean_iter] - 2), y=1)
+        fig.tight_layout()
+        plt.show()
+
+
+def main4_square():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+
+    # rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    # num_of_means = [3, 4, 5, 6, 7, 8, 9, 10]
+    rbf_widths = [0.3]
+    num_of_means = [12]
+    lrs = [0.01, 0.05, 0.07, 0.1, 0.2]
+    fig = plt.figure(figsize=plt.figaspect(0.2))
+    rbf_iter = 0
+    mean_iter = 0
+    for lr_iter in range(len(lrs)):
+        # for mean_iter in range(len(num_of_means)):
+        # for rbf_iter in range(len(rbf_widths)):
+        ax = fig.add_subplot(1, 5, lr_iter + 1)
+        means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+        # means = means[1:-1]
+        pos = []
+        for i in range(len(means)):
+            pos.append([means[i], rbf_widths[rbf_iter]])
+
+        model = RBF(pos=pos)
+
+        losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+        # losses = model.fit_delta(square_data['X_train'], square_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+        final_epochs = len(losses)
+        mse = losses[-1]
+        y_pred = model.predict(square_data['X_test'])
+
+        y_test = square_data['y_test'].reshape(-1, 1)
+        print("Residual Error:", residual_error(y_test, y_pred))
+
+        ax.plot(square_data['X_train'], square_data['y_train'], label="sin(2x) with noise")
+        ax.plot(square_data['X_test'], y_pred, label="Prediction")
+        ax.set_title("lr:{}, ep:{}, mse:{:.2} ".format(lrs[lr_iter], final_epochs, mse))
+        if lr_iter == 4:
+            handles, labels = ax.get_legend_handles_labels()
+            fig.legend(handles, labels, loc='lower left')
+
+    fig.suptitle("Online Learning with RBFs:{}, σ:{}".format(num_of_means[mean_iter], rbf_widths[rbf_iter]), y=1)
+    fig.tight_layout()
+    plt.show()
+
+
+def get_random_means(num):
+    data = np.linspace(0, 2*np.pi, 1000)
+    np.random.shuffle(data)
+    selected_random = data[:num]
+    return selected_random
+
+
+def compare_rbf_position():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+
+    # rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    # num_of_means = [3, 4, 5, 6, 7, 8, 9, 10]
+    rbf_widths = [0.3]
+    num_of_means = [12]
+    fig = plt.figure(figsize=plt.figaspect(0.2))
+    rbf_iter = 0
+    mean_iter = 0
+
+    # means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+    means = get_random_means(num_of_means[mean_iter])
+    pos = []
+    for i in range(len(means)):
+        pos.append([means[i], rbf_widths[rbf_iter]])
+
+
+    model = RBF(pos=pos)
+
+    # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+    losses = model.fit_delta(square_data['X_train'], square_data['y_train'], lr=0.01, epochs=1000)
+    final_epochs = len(losses)
+    mse = losses[-1]
+    y_pred = model.predict(square_data['X_test'])
+
+    y_test = square_data['y_test'].reshape(-1, 1)
+    print("Residual Error:", residual_error(y_test, y_pred))
+
+    plt.plot(square_data['X_train'], square_data['y_train'], label="sin(2x) with noise")
+    plt.plot(square_data['X_test'], y_pred, label="Prediction")
+    plt.title("Random distribution RBFs: {}, ep:{}, mse:{:.2} ".format(num_of_means[mean_iter], final_epochs, mse))
+    # fig.suptitle("Symmetric distribution of {} RBFs".format(rbf_widths[rbf_iter]), y=1)
+    # fig.tight_layout()
+    plt.legend()
+    plt.show()
+
+
+def compare_noise_free():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    test_dataset = create_dataset(should_plot=False, add_noise=False)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+    test_square_data = test_dataset['square']
+
+    # rbf_widths = [0.1, 0.5, 0.7, 1, 1.5]
+    # num_of_means = [3, 4, 5, 6, 7, 8, 9, 10]
+    rbf_widths = [0.3]
+    num_of_means = [12]
+    fig = plt.figure(figsize=plt.figaspect(0.2))
+    rbf_iter = 0
+    mean_iter = 0
+
+    means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+    # means = get_random_means(num_of_means[mean_iter])
+    pos = []
+    for i in range(len(means)):
+        pos.append([means[i], rbf_widths[rbf_iter]])
+
+    model = RBF(pos=pos)
+
+    # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+    losses = model.fit_delta(square_data['X_train'], square_data['y_train'], lr=0.01, epochs=1000)
+    final_epochs = len(losses)
+    mse = losses[-1]
+    y_pred = model.predict(test_square_data['X_test'])
+
+    y_test = test_square_data['y_test'].reshape(-1, 1)
+    print("Residual Error:", residual_error(y_test, y_pred))
+
+    plt.plot(square_data['X_train'], square_data['y_train'], label="square(2x) with noise")
+    plt.plot(test_square_data['X_test'], y_pred, label="Prediction")
+    plt.title("Noise-free test RBFs: {}, ep:{}, mse:{:.2} ".format(num_of_means[mean_iter], final_epochs, mse))
+    # fig.suptitle("Symmetric distribution of {} RBFs".format(rbf_widths[rbf_iter]), y=1)
+    # fig.tight_layout()
+    plt.legend()
+    plt.show()
+
+
+def compare_regression():
+    dataset = create_dataset(should_plot=False, add_noise=True)
+    sin_data = dataset['sin']
+    square_data = dataset['square']
+    regr = MLPRegressor(hidden_layer_sizes=[6], max_iter=10000, activation="tanh", learning_rate_init=0.1).fit(sin_data['X_train'].reshape(-1, 1), sin_data['y_train'])
+
+    y_pred = regr.predict(sin_data['X_test'].reshape(-1, 1))
+    # y_test = sin_data['y_test'].reshape(-1, 1)
+
+    mse = regr.loss_
+    epochs = regr.n_iter_
+
+    plt.plot(sin_data['X_train'], sin_data['y_train'], label="sin(2x) with noise")
+    plt.plot(sin_data['X_test'], y_pred, label="Prediction")
+    plt.title("MLP with hidden layer size 6, ep:{}, mse:{:.2f}".format(epochs, mse))
+    plt.legend()
+    plt.show()
+    # rbf_widths = [0.3]
+    # num_of_means = [12]
+    # fig = plt.figure(figsize=plt.figaspect(0.2))
+    # rbf_iter = 0
+    # mean_iter = 0
+    #
+    # means = np.linspace(0, 2 * np.pi, num_of_means[mean_iter])
+    # pos = []
+    # for i in range(len(means)):
+    #     pos.append([means[i], rbf_widths[rbf_iter]])
+    #
+    # model = RBF(pos=pos)
+    #
+    # # losses = model.fit_delta_online(sin_data['X_train'], sin_data['y_train'], lr=lrs[lr_iter], epochs=1000)
+    # losses = model.fit_delta(square_data['X_train'], square_data['y_train'], lr=0.01, epochs=1000)
+    # final_epochs = len(losses)
+    # mse = losses[-1]
+    # y_pred = model.predict(sin_data['X_test'])
+    #
+    # y_test = sin_data['y_test'].reshape(-1, 1)
+    # print("Residual Error:", residual_error(y_test, y_pred))
+    #
+    # plt.plot(square_data['X_train'], square_data['y_train'], label="square(2x) with noise")
+    # plt.plot(sin_data['X_test'], y_pred, label="Prediction")
+    # plt.title("Noise-free test RBFs: {}, ep:{}, mse:{:.2} ".format(num_of_means[mean_iter], final_epochs, mse))
+    # plt.legend()
+    # plt.show()
+
+calculate_num_points():
