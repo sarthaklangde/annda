@@ -205,8 +205,8 @@ class RestrictedBoltzmannMachine():
             # Note that this section can also be postponed until TASK 4.2, since in this task, stand-alone RBMs do not contain labels in visible layer.
 
             complete_input = self.bias_v + np.dot(hidden_minibatch, self.weight_vh.T)
-            label_data = complete_input[:, :-self.n_labels]
-            rbm_data = complete_input[:, -self.n_labels:]
+            rbm_data = complete_input[:, :-self.n_labels]
+            label_data = complete_input[:, -self.n_labels:]
             p_rbm = sigmoid(rbm_data)
             v_rbm = sample_binary(p_rbm)
 

@@ -43,7 +43,7 @@ class DeepBeliefNet():
 
         self.batch_size = batch_size
         
-        self.n_gibbs_recog = 15
+        self.n_gibbs_recog = 5
         
         self.n_gibbs_gener = 200
         
@@ -82,15 +82,18 @@ class DeepBeliefNet():
         h0 = None
         pv1 = None
         v1 = final_input
+        prev_v = None
+        prev_h = None
         for _ in range(self.n_gibbs_recog):
             print("Gibbs Iteration: {}".format(_))
             ph0, h0 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=False)
             pv1, v1 = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
+            ph1, h1 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=True)
+            if _ != 0:
+                self.rbm_stack["pen+lbl--top"].update_params(v_0=prev_v, h_0=h0, v_k=v1, h_k=h1)
+            prev_v = v1
 
-
-
-        predicted_lbl = v1[:, :-self.rbm_stack["pen+lbl--top"].n_labels]
-        print("Predicted Label", predicted_lbl.shape)
+        predicted_lbl = v1[:, -self.rbm_stack["pen+lbl--top"].n_labels:]
         print ("accuracy = %.2f%%"%(100.*np.mean(np.argmax(predicted_lbl,axis=1)==np.argmax(true_lbl,axis=1))))
         
         return
@@ -117,6 +120,7 @@ class DeepBeliefNet():
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
             
         for _ in range(self.n_gibbs_gener):
+
 
             vis = np.random.rand(n_sample,self.sizes["vis"])
             
