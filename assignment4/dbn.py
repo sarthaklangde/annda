@@ -1,6 +1,7 @@
 from util import *
 from rbm import RestrictedBoltzmannMachine
 import numpy as np
+import matplotlib.pyplot as plt
 
 class DeepBeliefNet():    
 
@@ -88,10 +89,10 @@ class DeepBeliefNet():
             print("Gibbs Iteration: {}".format(_))
             ph0, h0 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=False)
             pv1, v1 = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
-            ph1, h1 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=True)
-            if _ != 0:
-                self.rbm_stack["pen+lbl--top"].update_params(v_0=prev_v, h_0=h0, v_k=v1, h_k=h1)
-            prev_v = v1
+            # ph1, h1 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=True)
+            # if _ != 0:
+            #     self.rbm_stack["pen+lbl--top"].update_params(v_0=prev_v, h_0=h0, v_k=v1, h_k=h1)
+            # prev_v = v1
 
         predicted_lbl = v1[:, -self.rbm_stack["pen+lbl--top"].n_labels:]
         print ("accuracy = %.2f%%"%(100.*np.mean(np.argmax(predicted_lbl,axis=1)==np.argmax(true_lbl,axis=1))))
@@ -120,25 +121,31 @@ class DeepBeliefNet():
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
 
         v1 = None
-        h0 = None
+        h1 = None
 
         for _ in range(self.n_gibbs_gener):
-            if h0 is not None:
-                input_data_p, input_data = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
+            if h1 is not None:
+                input_data_p, input_data = self.rbm_stack["pen+lbl--top"].get_v_given_h(h1)
                 pen_vis_data = np.concatenate((input_data[:, :-10], lbl), axis=1)
             else:
+                # pen_input = np.zeros((1, self.sizes["pen"]))
                 pen_input = np.random.rand(1, self.sizes["pen"])
                 pen_vis_data = np.concatenate((pen_input, lbl), axis=1)
 
             ph0, h0 = self.rbm_stack["pen+lbl--top"].get_h_given_v(pen_vis_data, last=False)
             pv1, v1 = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
+            ph1, h1 = self.rbm_stack["pen+lbl--top"].get_h_given_v(v1, last=True)
 
-            third_p, third_h = self.rbm_stack["hid--pen"].get_v_given_h_dir(v1[:, :-10])
-            second_p, second_h = self.rbm_stack["vis--hid"].get_v_given_h_dir(third_h)
-            vis = second_h
-            records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
+        pv1, v1 = self.rbm_stack["pen+lbl--top"].get_v_given_h(h1)
 
-        anim = stitch_video(fig,records).save("%s.generate%d.mp4"%(name,np.argmax(true_lbl)))
+        third_p, third_h = self.rbm_stack["hid--pen"].get_v_given_h_dir(v1[:, :-10])
+        second_p, second_h = self.rbm_stack["vis--hid"].get_v_given_h_dir(third_h)
+        vis = second_h
+        ax.imshow(vis.reshape(self.image_size))
+        plt.show()
+        # records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
+        #
+        # anim = stitch_video(fig,records).save("%s.generate%d.mp4"%(name,np.argmax(true_lbl)))
             
         return
 
