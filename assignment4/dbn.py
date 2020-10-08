@@ -118,15 +118,27 @@ class DeepBeliefNet():
 
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
-            
+
+        v1 = None
+        h0 = None
+
         for _ in range(self.n_gibbs_gener):
+            if h0 is not None:
+                input_data_p, input_data = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
+                pen_vis_data = np.concatenate((input_data[:, :-10], lbl), axis=1)
+            else:
+                pen_input = np.random.rand(1, self.sizes["pen"])
+                pen_vis_data = np.concatenate((pen_input, lbl), axis=1)
 
+            ph0, h0 = self.rbm_stack["pen+lbl--top"].get_h_given_v(pen_vis_data, last=False)
+            pv1, v1 = self.rbm_stack["pen+lbl--top"].get_v_given_h(h0)
 
-            vis = np.random.rand(n_sample,self.sizes["vis"])
-            
+            third_p, third_h = self.rbm_stack["hid--pen"].get_v_given_h_dir(v1[:, :-10])
+            second_p, second_h = self.rbm_stack["vis--hid"].get_v_given_h_dir(third_h)
+            vis = second_h
             records.append( [ ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True, interpolation=None) ] )
-            
-        anim = stitch_video(fig,records).save("%s.generate%d.mp4"%(name,np.argmax(true_lbl)))            
+
+        anim = stitch_video(fig,records).save("%s.generate%d.mp4"%(name,np.argmax(true_lbl)))
             
         return
 
