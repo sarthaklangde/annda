@@ -1,2 +1,1 @@
-# annda
-Contains code to support assignments from ANN and Deep Arch course.
+This is code from the group work on the course "Artifical Neural Networks and Deep Architectures" at KTH Royal Institute of Technology wherein we implemented RBFs, RBMs, DBNs, Hopfield Networks, Deep Networks, etc.
